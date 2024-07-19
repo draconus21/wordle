@@ -16,6 +16,26 @@ class GameStatus(Enum):
     IN_PROGRESS = "in progress"
 
 
+def get_data():
+    import json
+    from prep_data import wordle_data_file
+
+    with open(wordle_data_file, "r") as f:
+        data = json.load(f)
+    assert len(data) > 0
+    return set(data.keys())
+
+
+valid_words = get_data()
+
+
+def validated_word(word: str) -> str:
+    assert len(word) == W_LEN, f"Must be a {W_LEN}-letter word"
+    _word = word.lower()
+    assert _word in valid_words, f"{word} is not a valid word"
+    return _word
+
+
 class WordleWord(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid", validate_assignment=True)
     guess: List[str] = []
@@ -80,23 +100,18 @@ class WordleWord(BaseModel):
         if len(val) == 0:  # no gueses yet
             return val
         assert len(val) <= MAX_STEPS, f"Out of tries"
-        assert all([len(v) == W_LEN for v in val]), f"Must be a list of {W_LEN}-letter words"
-        # TODO: check if val in valid_words
-        return [v.lower() for v in val]
+
+        return [validated_word(v) for v in val]
 
     @field_validator("current_guess")
     def v_current(cls, val):
         if val is None:
             return val
-        assert len(val) == W_LEN
-        # TODO: check if val in valid_words
-        return val.lower()
+        return validated_word(val)
 
     @field_validator("word")
     def v_word(cls, val):
-        assert len(val) == W_LEN
-        # TODO: check if val in valid_words
-        return val.lower()
+        return validated_word(val)
 
 
 class Game(ABC):
@@ -114,23 +129,13 @@ class Game(ABC):
                 self.wordle.current_guess = next_guess
                 self.wordle.guess.append(next_guess)
             except ValidationError as e:
-                print("Not a valid guess. Try again")
+                print(f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again")
         print(self.wordle.game_status)
 
 
 class GameHuman(Game):
     def get_next_guess(self) -> str:
         return input(self.wordle.printed_res)
-
-
-def get_data():
-    import json
-    from prep_data import wordle_data_file
-
-    with open(wordle_data_file, "r") as f:
-        data = json.load(f)
-    assert len(data) > 0
-    return set(data.keys())
 
 
 if __name__ == "__main__":
