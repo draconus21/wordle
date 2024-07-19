@@ -1,5 +1,6 @@
 from enum import Enum
 import numpy as np
+from abc import ABC, abstractmethod
 from pydantic import BaseModel, field_validator, ConfigDict, computed_field, ValidationError
 from typing import List
 
@@ -15,10 +16,26 @@ class GameStatus(Enum):
     IN_PROGRESS = "in progress"
 
 
-class WordleWord(BaseModel):
+class WordleWord(ABC, BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid", validate_assignment=True)
     guess: List[str] = []
     word: str
+
+    @computed_field
+    @property
+    def next_valid_guess(self) -> str:
+        try:
+            self.guess.append(self.next_guess)
+            return self.guess[-1]
+        except ValidationError as e:
+            print("Not a valid guess. Try again")
+            return self.next_valid_guess
+
+    @computed_field
+    @property
+    @abstractmethod
+    def next_guess(self) -> str:
+        pass
 
     @computed_field
     @property
@@ -89,20 +106,18 @@ class WordleWord(BaseModel):
         return val.lower()
 
 
+class WordleHuman(WordleWord):
+    def next_guess(self) -> str:
+        return input(self.printed_res)
+
+
 class Game:
     def __init__(self, word):
-        self.wordle = WordleWord(word=word)
+        self.wordle = WordleHuman(word=word)
 
     def play_usr(self):
         while not self.wordle.game_ended:
-            next_guess = input(self.wordle.printed_res)
-            try:
-                self.wordle.guess.append(next_guess)
-                self.wordle.guess = self.wordle.guess[:]  # to trigger pydantic validation checks
-            except ValidationError as e:
-                print("Not a valid guess. Try again")
-                self.wordle.guess.pop(-1)
-
+            self.wordle.next_valid_guess
         print(self.wordle.game_status)
 
 
