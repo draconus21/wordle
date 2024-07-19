@@ -1,4 +1,5 @@
 from enum import Enum
+from abc import ABC, abstractmethod
 import numpy as np
 from pydantic import BaseModel, field_validator, ConfigDict, computed_field, ValidationError
 from typing import List, Optional
@@ -98,19 +99,28 @@ class WordleWord(BaseModel):
         return val.lower()
 
 
-class Game:
+class Game(ABC):
     def __init__(self, word):
         self.wordle = WordleWord(word=word)
 
-    def play_usr(self):
+    @abstractmethod
+    def get_next_guess(self) -> str:
+        pass
+
+    def play(self):
         while not self.wordle.game_ended:
-            next_guess = input(self.wordle.printed_res)
+            next_guess = self.get_next_guess()
             try:
                 self.wordle.current_guess = next_guess
                 self.wordle.guess.append(next_guess)
             except ValidationError as e:
                 print("Not a valid guess. Try again")
         print(self.wordle.game_status)
+
+
+class GameHuman(Game):
+    def get_next_guess(self) -> str:
+        return input(self.wordle.printed_res)
 
 
 def get_data():
@@ -124,5 +134,5 @@ def get_data():
 
 
 if __name__ == "__main__":
-    w = Game(word="hello")
-    w.play_usr()
+    w = GameHuman(word="hello")
+    w.play()
