@@ -43,7 +43,7 @@ class WordleWord(BaseModel):
     @property
     def game_status(self) -> GameStatus:
         if self.result == [2] * W_LEN:
-            GameStatus.WON
+            return GameStatus.WON
 
         if len(self.guess) >= MAX_STEPS:
             return GameStatus.LOST
