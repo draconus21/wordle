@@ -1,7 +1,7 @@
 from enum import Enum
 import numpy as np
 from pydantic import BaseModel, field_validator, ConfigDict, computed_field, ValidationError
-from typing import List
+from typing import List, Optional
 
 
 from prep_data import wordle_len as W_LEN
@@ -18,6 +18,7 @@ class GameStatus(Enum):
 class WordleWord(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid", validate_assignment=True)
     guess: List[str] = []
+    current_guess: Optional[str] = None
     word: str
 
     @computed_field
@@ -30,10 +31,10 @@ class WordleWord(BaseModel):
         2 -> letter in word, AND in currect pos
         """
 
-        if not self.guess:
+        if self.current_guess is None:
             return [0] * W_LEN
 
-        _last_guess = self.guess[-1]
+        _last_guess = self.current_guess
         assert len(_last_guess) == W_LEN, f"Expecting {W_LEN}, but got {len(_last_guess)}"
         return [
             2 if _last_guess[i] == self.word[i] else (1 if _last_guess[i] in self.word else 0) for i in range(W_LEN)
@@ -66,7 +67,7 @@ class WordleWord(BaseModel):
             f"{MAX_STEPS-len(self.guess)} tries left",
         ]
         if self.guess:
-            msg.append(f"Last guess:\n{self.guess[-1]}")
+            msg.append(f"Last guess:\n{self.current_guess}")
             msg.append("".join([str(i) for i in self.result]))
         msg.append("**" * 10)
         if len(self.guess) < MAX_STEPS:
@@ -81,6 +82,14 @@ class WordleWord(BaseModel):
         assert all([len(v) == W_LEN for v in val]), f"Must be a list of {W_LEN}-letter words"
         # TODO: check if val in valid_words
         return [v.lower() for v in val]
+
+    @field_validator("current_guess")
+    def v_current(cls, val):
+        if val is None:
+            return val
+        assert len(val) == W_LEN
+        # TODO: check if val in valid_words
+        return val.lower()
 
     @field_validator("word")
     def v_word(cls, val):
@@ -97,12 +106,10 @@ class Game:
         while not self.wordle.game_ended:
             next_guess = input(self.wordle.printed_res)
             try:
+                self.wordle.current_guess = next_guess
                 self.wordle.guess.append(next_guess)
-                self.wordle.guess = self.wordle.guess[:]  # to trigger pydantic validation checks
             except ValidationError as e:
                 print("Not a valid guess. Try again")
-                self.wordle.guess.pop(-1)
-
         print(self.wordle.game_status)
 
 
