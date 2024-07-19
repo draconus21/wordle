@@ -1,8 +1,10 @@
+import string
+from getpass import getpass
 from enum import Enum
 from abc import ABC, abstractmethod
 import numpy as np
 from pydantic import BaseModel, field_validator, ConfigDict, computed_field, ValidationError
-from typing import List, Optional
+from typing import List, Optional, Set
 
 
 from prep_data import wordle_len as W_LEN
@@ -39,8 +41,10 @@ def validated_word(word: str) -> str:
 class WordleWord(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid", validate_assignment=True)
     guess: List[str] = []
-    current_guess: Optional[str] = None
     word: str
+    current_guess: Optional[str] = None
+    _possible_letters: Set[str] = {l for l in string.ascii_lowercase}
+    _not_in_word: Set[str] = set()
 
     @computed_field
     @property
@@ -57,9 +61,17 @@ class WordleWord(BaseModel):
 
         _last_guess = self.current_guess
         assert len(_last_guess) == W_LEN, f"Expecting {W_LEN}, but got {len(_last_guess)}"
-        return [
-            2 if _last_guess[i] == self.word[i] else (1 if _last_guess[i] in self.word else 0) for i in range(W_LEN)
-        ]
+        res = [2 if _last_guess[i] == self.word[i] else (1 if _last_guess[i] in self.word else 0) for i in range(W_LEN)]
+
+        # update _possible_letters, and _not_in_word
+        to_remove = {
+            _last_guess[i] for i, r in enumerate(res) if res[i] == 0 and _last_guess[i] in self._possible_letters
+        }
+        for l in to_remove:
+            self._not_in_word.add(l)
+            self._possible_letters.remove(l)
+
+        return res
 
     @computed_field
     @property
@@ -86,9 +98,11 @@ class WordleWord(BaseModel):
             "1 -> letter in word, but wrong pos",
             "2 -> letter in correct pos",
             f"{MAX_STEPS-len(self.guess)} tries left",
+            f"letters not in word: {' '.join(sorted(self._not_in_word))}",
+            f"letters left to use: {' '.join(sorted(self._possible_letters))}",
         ]
         if self.guess:
-            msg.append(f"Last guess:\n{self.current_guess}")
+            msg.append(f"Previous valid guess:\n{self.current_guess}")
             msg.append("".join([str(i) for i in self.result]))
         msg.append("**" * 10)
         if len(self.guess) < MAX_STEPS:
@@ -123,6 +137,15 @@ class Game(ABC):
         pass
 
     def play(self):
+        updated = False
+        while not updated:
+            try:
+                # self.wordle.word = getpass("What's your word: ")
+                self.wordle.word = list(valid_words)[np.random.randint(0, len(valid_words))]
+                updated = True
+            except ValidationError as e:
+                print(f"Not a valid word[{e.errors()[-1]['ctx']['error']}]. Try again")
+
         while not self.wordle.game_ended:
             next_guess = self.get_next_guess()
             try:
@@ -130,7 +153,7 @@ class Game(ABC):
                 self.wordle.guess.append(next_guess)
             except ValidationError as e:
                 print(f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again")
-        print(self.wordle.game_status)
+        print(f"{self.wordle.game_status}, word to guess: {self.wordle.word}")
 
 
 class GameHuman(Game):
