@@ -170,9 +170,33 @@ class GameHuman(Game):
 class GameAI(Game):
     def get_next_guess(self) -> str:
         _guesses = self.wordle.guess
-        _results = self.wordle.result
+        _results = np.array(self.wordle._result)
+        if len(_results) == 0:
+            return list(valid_words)[np.random.randint(0, len(valid_words))]
+
+        letters = {l: 1.0 for l in self.wordle._possible_letters}
+
+        candidate = [""] * W_LEN
+
+        # TODO: improve this logic
+        (guess_idx, letter_idx) = np.where(_results == 2)
+        for i in range(len(guess_idx)):
+            num = guess_idx[i]
+            pos = letter_idx[i]
+            candidate[pos] = _guesses[num][pos]
+        print(f"candidate: {candidate}")
+
+        (guess_idx, letter_idx) = np.where(_results == 1)
+        for i in range(len(guess_idx)):
+            num = guess_idx[i]
+            pos = letter_idx[i]
+            letters[_guesses[num][pos]] = 10
+
+        print(letters)
+
+        return input(self.wordle.printed_res)
 
 
 if __name__ == "__main__":
-    w = GameHuman(word="hello")
+    w = GameAI(word="hello")
     w.play()
