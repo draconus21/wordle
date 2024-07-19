@@ -45,6 +45,7 @@ class WordleWord(BaseModel):
     current_guess: Optional[str] = None
     _possible_letters: Set[str] = {l for l in string.ascii_lowercase}
     _not_in_word: Set[str] = set()
+    _result: List[List[int]] = list()
 
     @computed_field
     @property
@@ -58,8 +59,10 @@ class WordleWord(BaseModel):
 
         if self.current_guess is None:
             return [0] * W_LEN
+        if len(self._result) == len(self.guess):  # no need to update result (invalid input)
+            return self._result[-1]
 
-        _last_guess = self.current_guess
+        _last_guess = self.guess[-1]
         assert len(_last_guess) == W_LEN, f"Expecting {W_LEN}, but got {len(_last_guess)}"
         res = [2 if _last_guess[i] == self.word[i] else (1 if _last_guess[i] in self.word else 0) for i in range(W_LEN)]
 
@@ -71,7 +74,8 @@ class WordleWord(BaseModel):
             self._not_in_word.add(l)
             self._possible_letters.remove(l)
 
-        return res
+        self._result.append(res)
+        return self._result[-1]
 
     @computed_field
     @property
@@ -102,8 +106,10 @@ class WordleWord(BaseModel):
             f"letters left to use: {' '.join(sorted(self._possible_letters))}",
         ]
         if self.guess:
-            msg.append(f"Previous valid guess:\n{self.current_guess}")
-            msg.append("".join([str(i) for i in self.result]))
+            msg.append(f"Previous valid guesses:")
+            msg.append(" | ".join(self.guess))
+            msg.append(" | ".join(["".join(str(i) for i in res) for res in self._result]))
+            # msg.append("".join([str(i) for i in self.result]))
         msg.append("**" * 10)
         if len(self.guess) < MAX_STEPS:
             msg.append("Your next guess: ")
@@ -159,6 +165,12 @@ class Game(ABC):
 class GameHuman(Game):
     def get_next_guess(self) -> str:
         return input(self.wordle.printed_res)
+
+
+class GameAI(Game):
+    def get_next_guess(self) -> str:
+        _guesses = self.wordle.guess
+        _results = self.wordle.result
 
 
 if __name__ == "__main__":
