@@ -160,6 +160,7 @@ class Game(ABC):
             except ValidationError as e:
                 print(f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again")
         print(f"{self.wordle.game_status}, word to guess: {self.wordle.word}")
+        return self.wordle.game_status
 
 
 class GameHuman(Game):
@@ -219,7 +220,9 @@ class GameAI(Game):
         _guesses = self.wordle.guess
         _results = np.array(self.wordle._result)
         if len(_results) == 0:
-            _nxt = self._valid_words[np.random.randint(0, len(self._valid_words))]
+            _nxt = None
+            while not _nxt or len(set(_nxt)) != len(_nxt):  # first guess is a word w/ diff letters
+                _nxt = self._valid_words[np.random.randint(0, len(self._valid_words))]
             print(f"Next: {_nxt}")
             return _nxt
 
