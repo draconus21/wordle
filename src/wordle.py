@@ -159,13 +159,16 @@ class Game(ABC):
                 self.wordle.guess.append(next_guess)
             except ValidationError as e:
                 print(f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again")
-        print(f"{self.wordle.game_status}, word to guess: {self.wordle.word}")
         return self.wordle.game_status
 
 
 class GameHuman(Game):
     def get_next_guess(self) -> str:
         return input(self.wordle.printed_res)
+
+    def play(self):
+        super().play()
+        print(f"{self.wordle.game_status}, word to guess: {self.wordle.word}")
 
 
 class GameAI(Game):
@@ -187,7 +190,7 @@ class GameAI(Game):
         remove = {w for w in _cur_bow if any([w[i] != l for i, l in enumerate(_cur_guess) if _cur_res[i] == 2])}
         _cur_bow = list(set(_cur_bow) - remove)
 
-        print(f"red 2: {len(self._valid_words)} -> {len(_cur_bow)}")
+        # print(f"red 2: {len(self._valid_words)} -> {len(_cur_bow)}")
         self._valid_words = _cur_bow
 
         ## PARANOIA
@@ -213,7 +216,7 @@ class GameAI(Game):
 
         _cur_bow = list(set(_cur_bow) - remove)
 
-        print(f"red 1: {len(self._valid_words)} -> {len(_cur_bow)}")
+        # print(f"red 1: {len(self._valid_words)} -> {len(_cur_bow)}")
         self._valid_words = _cur_bow
 
     def get_next_guess(self) -> str:
@@ -223,7 +226,7 @@ class GameAI(Game):
             _nxt = None
             while not _nxt or len(set(_nxt)) != len(_nxt):  # first guess is a word w/ diff letters
                 _nxt = self._valid_words[np.random.randint(0, len(self._valid_words))]
-            print(f"Next: {_nxt}")
+            # print(f"Next: {_nxt}")
             return _nxt
 
         letters = {l: 1.0 for l in self.wordle._possible_letters}
@@ -234,11 +237,16 @@ class GameAI(Game):
         self.reduce_1()
 
         _nxt = self._valid_words[np.random.randint(0, len(self._valid_words))]
-        print(f"Next: {_nxt}")
-        input(self.wordle.printed_res)
+        # print(f"Next: {_nxt}")
+        # input(self.wordle.printed_res)
         return _nxt
 
 
 if __name__ == "__main__":
-    w = GameAI(word="hello")
-    w.play()
+    # GameHuman("hello").play()
+    n = 1000
+    stats = {GameStatus.WON: 0, GameStatus.LOST: 0}
+    for i in range(n):
+        stats[GameAI(word="hello").play()] += 1
+
+    print(stats)
