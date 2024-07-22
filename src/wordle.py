@@ -31,43 +31,6 @@ def get_data():
 valid_words = get_data()
 
 
-def reduce_list_2(word_list, reduce_map):
-    _red_list = [w for w in word_list if all([w[i] == l for i, l in enumerate(reduce_map) if l != ""])]
-    print(len(word_list), len(_red_list))
-    return _red_list
-
-
-def reduce_list_1(word_list, reduce_map):
-    _red_list = [
-        w
-        for w in word_list
-        if all([l in w for l in reduce_map if l != ""])  # letter in word
-        and all(
-            [w[i] != l for i, l in enumerate(reduce_map) if l != ""]
-        )  # pos of letter is not the current one (incorret pos)
-    ]
-    print(len(word_list), len(_red_list))
-    return _red_list
-
-
-def reduce_list_neg(word_list, invalid_letters):
-    if len(invalid_letters) == 0:
-        return word_list
-
-    _inv_list = {w for w in word_list if any([l in w for l in invalid_letters])}
-    _red_list = list(set(word_list) - _inv_list)
-
-    print(len(word_list), len(_red_list))
-    return _red_list
-
-
-def validated_word(word: str) -> str:
-    assert len(word) == W_LEN, f"Must be a {W_LEN}-letter word"
-    _word = word.lower()
-    assert _word in valid_words, f"{word} is not a valid word"
-    return _word
-
-
 class WordleWord(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid", validate_assignment=True)
     guess: List[str] = []
@@ -164,6 +127,13 @@ class WordleWord(BaseModel):
         return validated_word(val)
 
 
+def validated_word(word: str) -> str:
+    assert len(word) == W_LEN, f"Must be a {W_LEN}-letter word"
+    _word = word.lower()
+    assert _word in valid_words, f"{word} is not a valid word"
+    return _word
+
+
 class Game(ABC):
     def __init__(self, word):
         self.wordle = WordleWord(word=word)
@@ -207,38 +177,63 @@ class GameAI(Game):
         self._valid_words = list(valid_words)
         np.random.shuffle(self._valid_words)
 
+    def reduce_2(self):
+        _cur_guess = self.wordle.current_guess
+        _cur_res = self.wordle.result  # current result
+
+        _cur_bow = self._valid_words
+
+        remove = {w for w in _cur_bow if any([w[i] != l for i, l in enumerate(_cur_guess) if _cur_res[i] == 2])}
+        _cur_bow = list(set(_cur_bow) - remove)
+
+        print(f"red 2: {len(self._valid_words)} -> {len(_cur_bow)}")
+        self._valid_words = _cur_bow
+
+        ## PARANOIA
+        for w in self._valid_words:
+            assert all(w[i] == l for i, l in enumerate(_cur_guess) if _cur_res[i] == 2)
+
+    def reduce_1(self):
+        _cur_guess = self.wordle.current_guess
+        _cur_res = self.wordle.result  # current result
+        _cur_bow = self._valid_words
+
+        _letters = self.wordle._possible_letters
+        _iletters = set(string.ascii_lowercase) - self.wordle._possible_letters
+
+        # ensure that at least one occurance of letters w/ result=1 exists
+        _cur_bow = {w for w in _cur_bow if all([l in w for i, l in enumerate(_cur_guess) if _cur_res[i] == 1])}
+
+        # remove words w/ invalidated letters
+        remove = {w for w in _cur_bow if any(l in w for l in _iletters)}
+
+        # remove words w/ invalid positions
+        remove.update({w for w in _cur_bow if any([w[i] == l for i, l in enumerate(_cur_guess) if _cur_res[i] == 1])})
+
+        _cur_bow = list(set(_cur_bow) - remove)
+
+        print(f"red 1: {len(self._valid_words)} -> {len(_cur_bow)}")
+        self._valid_words = _cur_bow
+
     def get_next_guess(self) -> str:
         _guesses = self.wordle.guess
         _results = np.array(self.wordle._result)
         if len(_results) == 0:
-            return self._valid_words[np.random.randint(0, len(self._valid_words))]
+            _nxt = self._valid_words[np.random.randint(0, len(self._valid_words))]
+            print(f"Next: {_nxt}")
+            return _nxt
 
         letters = {l: 1.0 for l in self.wordle._possible_letters}
 
         candidate = [""] * W_LEN
 
-        # TODO: improve this logic
-        (guess_idx, letter_idx) = np.where(_results == 2)
-        for i in range(len(guess_idx)):
-            num = guess_idx[i]
-            pos = letter_idx[i]
-            candidate[pos] = _guesses[num][pos]
-        print(f"candidate: {candidate}")
+        self.reduce_2()
+        self.reduce_1()
 
-        self._valid_words = reduce_list_2(self._valid_words, candidate)
-
-        (guess_idx, letter_idx) = np.where(_results == 1)
-        for i in range(len(guess_idx)):
-            num = guess_idx[i]
-            pos = letter_idx[i]
-            letters[_guesses[num][pos]] = 10
-
-        self._valid_words = reduce_list_1(self._valid_words, [k for k in letters if letters[k] == 10])
-
-        invalid_letters = list({l for l in string.ascii_lowercase} - self.wordle._possible_letters)
-        self._valid_words = reduce_list_neg(self._valid_words, invalid_letters)
+        _nxt = self._valid_words[np.random.randint(0, len(self._valid_words))]
+        print(f"Next: {_nxt}")
         input(self.wordle.printed_res)
-        return self._valid_words[np.random.randint(0, len(self._valid_words))]
+        return _nxt
 
 
 if __name__ == "__main__":
