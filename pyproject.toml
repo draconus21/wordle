@@ -1,3 +1,34 @@
+[build-system]
+  build-backend="setuptools.build_meta"
+  requires     =[ "setuptools" ]
+
+[project]
+  authors=[ { name="Neeth Kunnath", email="neeth.xavier@gmail.com" } ]
+  classifiers=[
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.10"
+  ]
+  dependencies=[ "pydantic>=2.0", "click", "numpy" ]
+  description="A simple wordle game and solver in python"
+  dynamic=[ "readme" ]
+  keywords=[ "wordle" ]
+  license={ text="MIT license" }
+  name="wordle"
+  requires-python=">=3.10"
+  version="1.0"
+
+[project.optional-dependencies]
+  dev=[ "black", "build" ]
+
+[tool.setuptools.dynamic]
+  readme={ file=[ "README.md" ] }
+
+[tool.setuptools.packages.find]
+  include=[ "src" ]
+
 [tool.black]
   force-exclude='''
 (
@@ -18,4 +49,3 @@
 '''
   ignore="E501"
   line-length=120
-  target-version=[ "py37" ]

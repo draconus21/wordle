@@ -6,7 +6,7 @@ A simple wordle game w/ automatic solver.
 # python packages
 * click
 * numpy
-* pydantic
+* pydantic >= 2.0
 
 # Human mode
 ```console
