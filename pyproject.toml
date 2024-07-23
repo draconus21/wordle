@@ -25,9 +25,12 @@
 
 [tool.setuptools.dynamic]
   readme={ file=[ "README.md" ] }
-
+[project.scripts]
+  "wordle"="wordle.wordle:run"
 [tool.setuptools.packages.find]
-  include=[ "src" ]
+  include=[ "wordle" ]
+[tool.setuptools.package-data]
+  wordle=[ "data/*.json" ]
 
 [tool.black]
   force-exclude='''

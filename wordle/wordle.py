@@ -8,7 +8,7 @@ from pydantic import BaseModel, field_validator, ConfigDict, computed_field, Val
 from typing import List, Optional, Set
 
 
-from prep_data import wordle_len as W_LEN
+from wordle.prep_data import wordle_len as W_LEN
 
 MAX_STEPS = 5
 
@@ -21,7 +21,7 @@ class GameStatus(Enum):
 
 def get_data():
     import json
-    from prep_data import wordle_data_file
+    from wordle.prep_data import wordle_data_file
 
     with open(wordle_data_file, "r") as f:
         data = json.load(f)
