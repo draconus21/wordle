@@ -328,7 +328,7 @@ class GameAIForHuman(GameAI):
         return res
 
 
-@click.command()
+@click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("-ai", is_flag=True, help="watch the ai play", show_default=True)
 @click.option("-vs", is_flag=True, help="if you want to set the word to be guessed", show_default=True)
 def run(ai, vs):
