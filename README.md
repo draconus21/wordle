@@ -14,13 +14,13 @@ python src/wordle.py
 ```
 
 # \[AI\] Auto-mode
-```console
+```bash
 python src/wordle -ai
 ```
 
 You also have the option to set the word to be guess in both modes. To set the word, pass an extra option `-vs`. Then before the game begins, you will be prompted to enter a word to be guessed.
 
-```console
+```bash
 # to set the word for a game w/ another non-ai player
 python src/wordle -vs
 # or, to set the word for a game w/ ai
