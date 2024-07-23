@@ -1,3 +1,4 @@
+import click
 import string
 from getpass import getpass
 from enum import Enum
@@ -30,6 +31,8 @@ def get_data():
 
 valid_words = get_data()
 
+qwerty = ["qwertyuiop", " asdfghjkl", "  zxcvbnm"]
+
 
 class WordleWord(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid", validate_assignment=True)
@@ -38,6 +41,8 @@ class WordleWord(BaseModel):
     current_guess: Optional[str] = None
     _possible_letters: Set[str] = {l for l in string.ascii_lowercase}
     _not_in_word: Set[str] = set()
+    _letters_in_word: Set[str] = set()
+    _letters_correct: Set[str] = set()
     _result: List[List[int]] = list()
 
     @computed_field
@@ -58,6 +63,13 @@ class WordleWord(BaseModel):
         _last_guess = self.guess[-1]
         assert len(_last_guess) == W_LEN, f"Expecting {W_LEN}, but got {len(_last_guess)}"
         res = [2 if _last_guess[i] == self.word[i] else (1 if _last_guess[i] in self.word else 0) for i in range(W_LEN)]
+
+        # update letters in word
+        for i, r in enumerate(res):
+            if r in [1, 2]:
+                self._letters_in_word.add(_last_guess[i])
+                if r == 2:
+                    self._letters_correct.add(_last_guess[i])
 
         # update _possible_letters, and _not_in_word
         to_remove = {
@@ -89,23 +101,27 @@ class WordleWord(BaseModel):
     @computed_field
     @property
     def printed_res(self) -> str:
-        msg = [
-            "**" * 10,
-            "0 -> letter not in word",
-            "1 -> letter in word, but wrong pos",
-            "2 -> letter in correct pos",
-            f"{MAX_STEPS-len(self.guess)} tries left",
-            f"letters not in word: {' '.join(sorted(self._not_in_word))}",
-            f"letters left to use: {' '.join(sorted(self._possible_letters))}",
-        ]
+        msg = []
+        msg.extend(qwerty)  # idx 0-2
         if self.guess:
             msg.append(f"Previous valid guesses:")
-            msg.append(" | ".join(self.guess))
-            msg.append(" | ".join(["".join(str(i) for i in res) for res in self._result]))
-            # msg.append("".join([str(i) for i in self.result]))
-        msg.append("**" * 10)
-        if len(self.guess) < MAX_STEPS:
-            msg.append("Your next guess: ")
+            msg.extend(self.guess)  # idx 4
+        msg.append(f"{MAX_STEPS-len(self.guess)} tries left")
+
+        l = max(len(i) * 2 if ct == 0 else len(i) for ct, i in enumerate(msg))
+        delim = "*" * l + "*****"
+
+        for i in range(len(msg) - 1):
+            if i == 3:
+                continue
+            msg[i] = display_letters(msg[i], wordle=self)
+
+        msg.insert(-1, delim)
+        if self.guess:
+            msg.insert(4, delim)
+            msg.insert(3, delim)
+        msg.insert(0, delim)
+
         return "\n".join(msg)
 
     @field_validator("guess")
@@ -125,6 +141,31 @@ class WordleWord(BaseModel):
     @field_validator("word")
     def v_word(cls, val):
         return validated_word(val)
+
+
+def display_letters(msg=string.ascii_lowercase, wordle: WordleWord = None):
+    if wordle is None:
+        return msg
+    _good = wordle._letters_correct
+    _bad = wordle._not_in_word
+    _found = wordle._letters_in_word
+
+    bad_color = lambda x: click.style(x, fg="black", strikethrough=True)
+    med_color = lambda x: click.style(x, fg="yellow", bold=True)
+    unused_color = lambda x: click.style(x)
+    good_color = lambda x: click.style(x, fg="green", bold=True, underline=True)
+
+    cmsg = []
+    for l in msg:
+        if l in _bad:
+            cmsg.append(bad_color(l))
+        elif l in _good:
+            cmsg.append(good_color(l))
+        elif l in _found:
+            cmsg.append(med_color(l))
+        else:
+            cmsg.append(unused_color(l))
+    return " ".join(cmsg)
 
 
 def validated_word(word: str) -> str:
@@ -150,7 +191,7 @@ class Game(ABC):
                 self.wordle.word = list(valid_words)[np.random.randint(0, len(valid_words))]
                 updated = True
             except ValidationError as e:
-                print(f"Not a valid word[{e.errors()[-1]['ctx']['error']}]. Try again")
+                click.secho(f"Not a valid word[{e.errors()[-1]['ctx']['error']}]. Try again", fg="red")
 
         while not self.wordle.game_ended:
             next_guess = self.get_next_guess()
@@ -158,13 +199,20 @@ class Game(ABC):
                 self.wordle.current_guess = next_guess
                 self.wordle.guess.append(next_guess)
             except ValidationError as e:
-                print(f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again")
+                click.secho(f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again", fg="red")
         return self.wordle.game_status
 
 
 class GameHuman(Game):
+    def __init__(self, word):
+        super().__init__(word)
+        click.clear()
+
     def get_next_guess(self) -> str:
-        return input(self.wordle.printed_res)
+        click.clear()
+        click.echo(self.wordle.printed_res)
+        _nxt = input("Your next guess...:")
+        return _nxt
 
     def play(self):
         super().play()
@@ -243,10 +291,10 @@ class GameAI(Game):
 
 
 if __name__ == "__main__":
-    # GameHuman("hello").play()
-    n = 1000
-    stats = {GameStatus.WON: 0, GameStatus.LOST: 0}
-    for i in range(n):
-        stats[GameAI(word="hello").play()] += 1
+    GameHuman("hello").play()
+    # n = 1000
+    # stats = {GameStatus.WON: 0, GameStatus.LOST: 0}
+    # for i in range(n):
+    #    stats[GameAI(word="hello").play()] += 1
 
-    print(stats)
+    # print(stats)
