@@ -176,52 +176,79 @@ def validated_word(word: str) -> str:
 
 
 class Game(ABC):
-    def __init__(self, word):
+    def __init__(self, word, vs_mode=False):
         self.wordle = WordleWord(word=word)
+        self.get_word = self.get_word_user if vs_mode else self.get_random_word
 
     @abstractmethod
     def get_next_guess(self) -> str:
         pass
 
+    def get_random_word(self) -> str:
+        # pick a random word
+        return list(valid_words)[np.random.randint(0, len(valid_words))]
+
+    def get_word_user(self) -> str:
+        # ask the user to enter to word to guess
+        return getpass("What's your word: ")
+
+    def greet(self):
+        click.echo("*************************************")
+        click.echo("*********                   *********")
+        click.echo("******                         ******")
+        click.echo("***            wordle             ***")
+        click.echo("******                         ******")
+        click.echo("*********                   *********")
+        click.echo("*************************************")
+        click.echo()
+
     def play(self):
         updated = False
         while not updated:
             try:
-                # self.wordle.word = getpass("What's your word: ")
-                self.wordle.word = list(valid_words)[np.random.randint(0, len(valid_words))]
+                wrd = self.get_word()
+                self.wordle.word = wrd
                 updated = True
             except ValidationError as e:
-                click.secho(f"Not a valid word[{e.errors()[-1]['ctx']['error']}]. Try again", fg="red")
+                click.secho(f"{wrd} is not a valid word[{e.errors()[-1]['ctx']['error']}]. Try again", fg="red")
 
+        error = None
         while not self.wordle.game_ended:
+            click.clear()
+            self.greet()
+            if error:
+                click.secho(error, fg="red")
             next_guess = self.get_next_guess()
             try:
                 self.wordle.current_guess = next_guess
                 self.wordle.guess.append(next_guess)
+                error = None
             except ValidationError as e:
-                click.secho(f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again", fg="red")
+                error = f"Not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again"
+
         return self.wordle.game_status
 
 
 class GameHuman(Game):
-    def __init__(self, word):
-        super().__init__(word)
-        click.clear()
+    def __init__(self, word, vs_mode=False):
+        super().__init__(word, vs_mode=vs_mode)
 
     def get_next_guess(self) -> str:
-        click.clear()
         click.echo(self.wordle.printed_res)
         _nxt = input("Your next guess...:")
         return _nxt
 
     def play(self):
-        super().play()
-        print(f"{self.wordle.game_status}, word to guess: {self.wordle.word}")
+        res = super().play()
+        click.clear()
+        click.echo(self.greet())
+        click.echo(self.wordle.printed_res)
+        return res
 
 
 class GameAI(Game):
-    def __init__(self, word):
-        super().__init__(word=word)
+    def __init__(self, word, vs_mode=False):
+        super().__init__(word=word, vs_mode=vs_mode)
         self._valid_words = []
         self.reset()  # sets _valid words
 
@@ -285,13 +312,43 @@ class GameAI(Game):
         self.reduce_1()
 
         _nxt = self._valid_words[np.random.randint(0, len(self._valid_words))]
-        # print(f"Next: {_nxt}")
-        # input(self.wordle.printed_res)
         return _nxt
 
 
+class GameAIForHuman(GameAI):
+    def get_next_guess(self) -> str:
+        click.echo(self.wordle.printed_res)
+        return super().get_next_guess()
+
+    def play(self):
+        res = super().play()
+        click.clear()
+        click.echo(self.greet())
+        click.echo(self.wordle.printed_res)
+        return res
+
+
+@click.command()
+@click.option("-ai", is_flag=True, help="watch the ai play", show_default=True)
+@click.option("-vs", is_flag=True, help="if you want to set the word to be guessed", show_default=True)
+def run(ai, vs):
+    """
+    Wordle in python
+    """
+    if ai:
+        game = GameAIForHuman("hello", vs_mode=vs)
+    else:
+        game = GameHuman("hello", vs_mode=vs)
+    game.play()
+    print(f"{game.wordle.game_status}, word to guess: {game.wordle.word}")
+
+
 if __name__ == "__main__":
-    GameHuman("hello").play()
+    try:
+        result = run()
+        click.echo(result)
+    except Exception as e:
+        print(e)
     # n = 1000
     # stats = {GameStatus.WON: 0, GameStatus.LOST: 0}
     # for i in range(n):
