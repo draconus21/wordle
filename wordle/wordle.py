@@ -114,7 +114,7 @@ class WordleWord(BaseModel):
         for i in range(len(msg) - 1):
             if i == 3:
                 continue
-            msg[i] = display_letters(msg[i], wordle=self)
+            msg[i] = display_letters(msg[i], colorcode=self._result[i - 4] if i > 3 else None, wordle=self)
 
         msg.insert(-1, delim)
         if self.guess:
@@ -143,9 +143,12 @@ class WordleWord(BaseModel):
         return validated_word(val)
 
 
-def display_letters(msg=string.ascii_lowercase, wordle: WordleWord = None):
+def display_letters(
+    msg=string.ascii_lowercase, colorcode: Optional[List[int]] = None, wordle: Optional[WordleWord] = None
+):
     if wordle is None:
         return msg
+
     _good = wordle._letters_correct
     _bad = wordle._not_in_word
     _found = wordle._letters_in_word
@@ -155,9 +158,18 @@ def display_letters(msg=string.ascii_lowercase, wordle: WordleWord = None):
     unused_color = lambda x: click.style(x)
     good_color = lambda x: click.style(x, fg="green", bold=True, underline=True)
 
+    use_colorcode = colorcode is not None and (len(colorcode) == len(msg))
     cmsg = []
-    for l in msg:
-        if l in _bad:
+    for i, l in enumerate(msg):
+        if use_colorcode:
+            match colorcode[i]:
+                case 0:
+                    cmsg.append(bad_color(l))
+                case 1:
+                    cmsg.append(med_color(l))
+                case 2:
+                    cmsg.append(good_color(l))
+        elif l in _bad:
             cmsg.append(bad_color(l))
         elif l in _good:
             cmsg.append(good_color(l))
