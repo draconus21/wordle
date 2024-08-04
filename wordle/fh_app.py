@@ -25,10 +25,10 @@ def play_area():
     n_cols = 5
     return ft.Div(
         *[
-            ft.Div(*[ft.Div(f"{i}_{j}", id="box_{i}{j}", cls="cell") for j in range(n_cols)], id=f"row_{i}", cls="row")
+            ft.Div(*[ft.Div(f"", id="box_{i}{j}", cls="cell") for j in range(n_cols)], id=f"row_{i}", cls="row")
             for i in range(n_rows)
         ],
-        cls="table",
+        cls="board",
     )
     # return ft.Table(
     #    *[
@@ -40,7 +40,7 @@ def play_area():
 
 @app.get("/")
 def setup():
-    return ft.Div(ft.H1("Wordle"), play_area(), cls="contianer")
+    return ft.Div(ft.H1("Wordle"), play_area(), cls="container")
 
 
 common.serve()
