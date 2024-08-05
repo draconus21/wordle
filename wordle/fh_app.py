@@ -2,12 +2,16 @@ from pathlib import Path
 from wordle.wordle import Game
 
 from fasthtml import common
-from fasthtml import live_reload, ft
+from fasthtml import ft
+
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 n_rows = 5
 n_cols = 5
-guesses = [[""] * n_cols] * n_rows
+guesses = [[" " for i in range(n_cols)] for j in range(n_rows)]
 
 
 class GameFH(Game):
