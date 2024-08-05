@@ -23,7 +23,7 @@ class GameFH(Game):
         self.cur_col = 0
 
     def get_next_guess(self, guesses: List[List[str]]) -> str:
-        return "".join(guesses[self.cur_row - 1])
+        return "".join(guesses[self.cur_row])
 
 
 game = GameFH("scams")
@@ -57,7 +57,7 @@ def play_area():
 def button(key):
     return ft.Button(
         key,
-        cls="key",
+        cls="key" if len(key) == 1 else "key large",
         hx_get=f"/keypress/{key}",
         id=f"key-{key}",
         hx_swap_oob="true",
@@ -68,14 +68,16 @@ def button(key):
 
 def keyboard():
     keys = ["qwertyuioq", "asdfghjkl", "zxcvbnm"]
+    board_keys = [
+        ft.Div(
+            *[button(k) for k in row],
+            cls="keyboard_row",
+        )
+        for row in keys
+    ]
+    board_keys.extend([ft.Div(button("Enter"), button("Delete"))])
     return ft.Div(
-        *[
-            ft.Div(
-                *[button(k) for k in row],
-                cls="keyboard_row",
-            )
-            for row in keys
-        ],
+        *board_keys,
         cls="keyboard",
     )
 
@@ -94,22 +96,25 @@ def home():
 def key_pressed(key: str):
     global game
     global guesses
-    guesses[game.cur_row][game.cur_col] = key
-    game.cur_row += (game.cur_col + 1) // n_cols
-    game.cur_col = (game.cur_col + 1) % n_cols
-    # check word
     error = ""
-    if game.cur_col == 0:
+
+    if key == "Enter":  # check word
         try:
             guess = game.get_next_guess(guesses)
             game.wordle.current_guess = guess
             game.wordle.guess.append(game.wordle.current_guess)
+            game.cur_row += min(1, n_rows)  # TODO: handle end of game
+            game.cur_col = 0
         except ValidationError as e:
             error = f"{guess} is not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again"
             logging.error(error)
-            game.cur_col = n_cols - 1
-            game.cur_row -= 1
-
+    elif key == "Delete":  # delete character
+        game.cur_col = max(0, game.cur_col - 1)
+        guesses[game.cur_row][game.cur_col] = ""
+    else:
+        guesses[game.cur_row][game.cur_col] = key
+        game.cur_col = min(game.cur_col + 1, n_cols)
+    logging.info(f"{game.cur_row}: {game.cur_col}")
     return button(key), play_area(), msg_area(error)
 
 
