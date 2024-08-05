@@ -1,5 +1,7 @@
 from pathlib import Path
 from wordle.wordle import Game
+from pydantic import ValidationError
+from typing import List
 
 from fasthtml import common
 from fasthtml import ft
@@ -20,8 +22,8 @@ class GameFH(Game):
         self.cur_row = 0
         self.cur_col = 0
 
-    def get_next_guess(self) -> str:
-        pass
+    def get_next_guess(self, guesses: List[List[str]]) -> str:
+        return "".join(guesses[self.cur_row - 1])
 
 
 game = GameFH("scams")
@@ -30,9 +32,14 @@ css = common.StyleX((Path(__file__).parent / "assets/wordle.css").resolve())
 app, rt = common.fast_app(hdrs=(css,), live=True)
 
 
+def msg_area(msg=""):
+    return ft.Div(msg, id="msg-area", cls="message", hx_swap_oob="true")
+
+
 def play_area():
     global n_rows
     global n_cols
+    global guesses
     return ft.Div(
         *[
             ft.Div(
@@ -76,6 +83,7 @@ def keyboard():
 def home():
     return ft.Div(
         ft.H1("Wordle"),
+        msg_area(),
         play_area(),
         keyboard(),
         cls="container",
@@ -89,7 +97,20 @@ def key_pressed(key: str):
     guesses[game.cur_row][game.cur_col] = key
     game.cur_row += (game.cur_col + 1) // n_cols
     game.cur_col = (game.cur_col + 1) % n_cols
-    return button(key), play_area()
+    # check word
+    error = ""
+    if game.cur_col == 0:
+        try:
+            guess = game.get_next_guess(guesses)
+            game.wordle.current_guess = guess
+            game.wordle.guess.append(game.wordle.current_guess)
+        except ValidationError as e:
+            error = f"{guess} is not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again"
+            logging.error(error)
+            game.cur_col = n_cols - 1
+            game.cur_row -= 1
+
+    return button(key), play_area(), msg_area(error)
 
 
 @app.get("/")
