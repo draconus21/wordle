@@ -122,7 +122,7 @@ def key_pressed(key: str):
             game.cur_col = 0
 
         except ValidationError as e:
-            error = f"{guess} is not a valid guess [{e.errors()[-1]['ctx']['error']}]. Try again"
+            error = f"{e.errors()[-1]['ctx']['error']}. Try again"
             logging.error(error)
     elif key == "Delete":  # delete character
         game.cur_col = max(0, game.cur_col - 1)
