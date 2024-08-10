@@ -9,24 +9,27 @@ body {
     margin: 0;
 }
 
-.container {
+.containerx {
     text-align: center;
 }
 
-.board {
+.container.board {
     display: grid;
+    text-align: center;
     grid-template-rows: repeat(6, 1fr);
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .row {
-    display: grid;
+    display: table-row;
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
 }
 
 .cell {
+    text-align: center;
+    display: table-cell;
     width: 60px;
     height: 60px;
     border: 2px solid #3a3a3c;
@@ -38,46 +41,26 @@ body {
 
 .cell.good {
     background-color: #13dd42;
-    width: 60px;
-    height: 60px;
-    border: 2px solid #3a3a3c;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-    font-weight: bold;
 }
 
 .cell.pos {
     background-color: #e7c908;
-    width: 60px;
-    height: 60px;
-    border: 2px solid #3a3a3c;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-    font-weight: bold;
 }
 
 .cell.bad {
     background-color: #3d3e3f;
-    width: 60px;
-    height: 60px;
-    border: 2px solid #3a3a3c;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-    font-weight: bold;
 }
 
 .keyboard {
+    align-self: center;
     display: grid;
     grid-template-rows: repeat(3, 1fr);
+    justify-content: center;
     gap: 10px;
 }
 
-.keyboard-row {
+.keyboard.row {
     display: flex;
-    justify-content: center;
     gap: 5px;
 }
 
@@ -95,38 +78,14 @@ body {
 
 .key.good {
     background-color: #13dd42;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    height: 50px;
-    width: 40px;
-    cursor: pointer;
 }
 
 .key.pos {
     background-color: #e7c908;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    height: 50px;
-    width: 40px;
-    cursor: pointer;
 }
 
 .key.bad {
     background-color: #3d3e3f;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    height: 50px;
-    width: 40px;
-    cursor: pointer;
 }
 
 .key.large {
@@ -136,14 +95,4 @@ body {
 .table {
     display: table;
     width: 100%;
-}
-
-.row {
-    display: table-row;
-}
-
-.cell {
-    display: table-cell;
-    padding: 10px;
-    border: 1px solid #ccc;
 }

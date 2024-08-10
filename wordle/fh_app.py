@@ -51,7 +51,7 @@ def play_area():
             for i in range(n_rows)
         ],
         id="play-area",
-        cls="board",
+        cls="container board",
     )
 
 
@@ -72,11 +72,11 @@ def keyboard():
     board_keys = [
         ft.Div(
             *[button(k) for k in row],
-            cls="keyboard_row",
+            cls="keyboard row",
         )
         for row in keys
     ]
-    board_keys.extend([ft.Div(button("Enter"), button("Delete"), cls="keyboard_row")])
+    board_keys.extend([ft.Div(button("Enter"), button("Delete"), cls="keyboard row")])
     return ft.Div(
         *board_keys,
         cls="keyboard",
