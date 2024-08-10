@@ -68,7 +68,7 @@ def button(key):
 
 
 def keyboard():
-    keys = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
+    keys = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
     board_keys = [
         ft.Div(
             *[button(k) for k in row],
