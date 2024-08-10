@@ -199,7 +199,8 @@ class Game(ABC):
     def get_next_guess(self) -> str:
         pass
 
-    def get_random_word(self) -> str:
+    @classmethod
+    def get_random_word(cls) -> str:
         # pick a random word
         return list(valid_words)[np.random.randint(0, len(valid_words))]
 

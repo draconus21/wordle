@@ -27,7 +27,7 @@ class GameFH(Game):
         return "".join([g[0] for g in guesses[self.cur_row]])
 
 
-game = GameFH("scams")
+game = GameFH(Game.get_random_word())
 
 css = common.StyleX((Path(__file__).parent / "assets/wordle.css").resolve())
 app, rt = common.fast_app(hdrs=(css,), live=True)
