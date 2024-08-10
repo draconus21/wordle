@@ -10,7 +10,7 @@ from typing import List, Optional, Set
 
 from wordle.prep_data import wordle_len as W_LEN
 
-MAX_STEPS = 5
+MAX_STEPS = 6
 
 
 class GameStatus(Enum):

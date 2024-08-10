@@ -1,5 +1,5 @@
 from pathlib import Path
-from wordle.wordle import Game, GameStatus
+from wordle.wordle import Game, GameStatus, MAX_STEPS, W_LEN
 from pydantic import ValidationError
 from typing import List
 
@@ -11,8 +11,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-n_rows = 5
-n_cols = 5
+n_rows = MAX_STEPS
+n_cols = W_LEN
 guesses = [[(" ", "cell") for i in range(n_cols)] for j in range(n_rows)]
 key_colors = {"Enter": "key large", "Delete": "key large"}
 
@@ -34,7 +34,7 @@ app, rt = common.fast_app(hdrs=(css,), live=True)
 
 
 def msg_area(msg=""):
-    return ft.Div(msg, id="msg-area", cls="message", hx_swap_oob="true")
+    return ft.Div(msg, id="msg-area", cls="container containerx", hx_swap_oob="true")
 
 
 def play_area():
@@ -51,7 +51,7 @@ def play_area():
             for i in range(n_rows)
         ],
         id="play-area",
-        cls="container board",
+        cls="container containerx board",
     )
 
 
@@ -72,25 +72,25 @@ def keyboard():
     board_keys = [
         ft.Div(
             *[button(k) for k in row],
-            cls="keyboard row",
+            cls="container keyboard row",
         )
         for row in keys
     ]
-    board_keys.extend([ft.Div(button("Enter"), button("Delete"), cls="keyboard row")])
+    board_keys.extend([ft.Div(button("Enter"), button("Delete"), cls="container keyboard row")])
     return ft.Div(
         *board_keys,
-        cls="keyboard",
+        cls="container containerx keyboard",
         hx_swap_oob="true",
     )
 
 
 def home():
     return ft.Div(
-        ft.H1("Wordle"),
+        ft.H1("Wordle", cls="container containerx"),
         msg_area(),
         play_area(),
         keyboard(),
-        cls="container",
+        cls="container containerx",
     )
 
 
