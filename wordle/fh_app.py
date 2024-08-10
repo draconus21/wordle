@@ -13,6 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 n_rows = MAX_STEPS
 n_cols = W_LEN
+
 guesses = [[(" ", "cell") for i in range(n_cols)] for j in range(n_rows)]
 key_colors = {"Enter": "key large", "Delete": "key large"}
 
@@ -69,16 +70,18 @@ def button(key):
 
 def keyboard():
     keys = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
-    board_keys = [
-        ft.Div(
-            *[button(k) for k in row],
-            cls="container keyboard row",
-        )
-        for row in keys
-    ]
-    board_keys.extend([ft.Div(button("Enter"), button("Delete"), cls="container keyboard row")])
+    keys = [[button(k) for k in row] for row in keys]
+    keys[2].insert(0, button("Enter"))
+    keys[2].append(button("Delete"))
+
     return ft.Div(
-        *board_keys,
+        *[
+            ft.Div(
+                *row,
+                cls="container keyboard row",
+            )
+            for row in keys
+        ],
         cls="container containerx keyboard",
         hx_swap_oob="true",
     )
