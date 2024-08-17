@@ -5,14 +5,55 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/python:1-3.10-bullseye",
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	"features": {},
+	//"features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
 		8000
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
+	"postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && pip install -e .[dev]",
 	// Configure tool-specific properties.
-	// "customizations": {},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.black-formatter",
+				"ms-python.isort",
+				"tamasfe.even-better-toml"
+			],
+			"settings": {
+				"editor.formatOnSave": true,
+				"python.analysis.autoFormatStrings": true,
+				"black-formatter.showNotifications": "onError",
+				"terminal.integrated.tabStopWidth": 2,
+				"editor.renderWhitespace": "trailing",
+				"files.trimTrailingWhitespace": true,
+				"terminal.integrated.defaultProfile.windows": "Git Bash",
+				"terminal.integrated.defaultProfile.linux": "zsh",
+				"terminal.integrated.defaultProfile.osx": "zsh",
+				"[python]": {
+					"editor.defaultFormatter": "ms-python.black-formatter",
+					"editor.formatOnSave": true
+				},
+				"[tomld]": {
+					"editor.formatOnSave": true
+				},
+				"evenBetterToml.formatter.alignComments": true,
+				"evenBetterToml.formatter.alignEntries": true,
+				"evenBetterToml.formatter.compactEntries": true,
+				"evenBetterToml.formatter.compactInlineTables": false,
+				"evenBetterToml.formatter.indentEntries": true,
+				"evenBetterToml.formatter.columnWidth": 120,
+				"evenBetterToml.formatter.allowedBlankLines": 1,
+				"evenBetterToml.formatter.arrayTrailingComma": false,
+				"evenBetterToml.formatter.reorderKeys": true,
+				"evenBetterToml.formatter.trailingNewline": true,
+				"evenBetterToml.formatter.compactArrays": false,
+				"evenBetterToml.formatter.reorderArrays": false,
+				"evenBetterToml.rules": [],
+				"explorer.excludeGitIgnore": true
+			}
+		}
+	}
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	//"remoteUser": ""
 }
