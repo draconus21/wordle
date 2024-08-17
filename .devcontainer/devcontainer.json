@@ -11,7 +11,10 @@
 		8000
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && pip install -e .[dev]",
+	"containerEnv": {
+		"CNT_POST_SCRIPT": "${containerWorkspaceFolder}/.devcontainer/post-install.sh"
+	},
+	"postStartCommand": "chmod +x ${CNT_POST_SCRIPT} && git config --global --add safe.directory ${containerWorkspaceFolder} && ${CNT_POST_SCRIPT}",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
