@@ -14,7 +14,7 @@
 	"containerEnv": {
 		"CNT_POST_SCRIPT": "${containerWorkspaceFolder}/.devcontainer/post-install.sh"
 	},
-	"postStartCommand": "chmod +x ${CNT_POST_SCRIPT} && git config --global --add safe.directory ${containerWorkspaceFolder} && ${CNT_POST_SCRIPT}",
+	"postStartCommand": "chmod +x ${CNT_POST_SCRIPT} && ${CNT_POST_SCRIPT}",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
