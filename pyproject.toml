@@ -11,7 +11,7 @@
     "Natural Language :: English",
     "Programming Language :: Python :: 3.10"
   ]
-  dependencies=[ "pydantic>=2.0", "click", "numpy" ]
+  dependencies=[ "pydantic>=2.0", "click", "numpy", "python-fasthtml" ]
   description="A simple wordle game and solver in python"
   dynamic=[ "readme" ]
   keywords=[ "wordle" ]

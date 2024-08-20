@@ -4,13 +4,13 @@ from getpass import getpass
 from enum import Enum
 from abc import ABC, abstractmethod
 import numpy as np
-from pydantic import BaseModel, field_validator, ConfigDict, computed_field, ValidationError
+from pydantic import BaseModel, field_validator, ConfigDict, computed_field, ValidationError, ValidationInfo
 from typing import List, Optional, Set
 
 
 from wordle.prep_data import wordle_len as W_LEN
 
-MAX_STEPS = 5
+MAX_STEPS = 6
 
 
 class GameStatus(Enum):
@@ -133,10 +133,13 @@ class WordleWord(BaseModel):
         return [validated_word(v) for v in val]
 
     @field_validator("current_guess")
-    def v_current(cls, val):
+    def v_current(cls, val, info: ValidationInfo):
         if val is None:
             return val
-        return validated_word(val)
+
+        val = validated_word(val)
+        assert val not in info.data["guess"], f"{val} has already been guessed"
+        return val
 
     @field_validator("word")
     def v_word(cls, val):
@@ -196,7 +199,8 @@ class Game(ABC):
     def get_next_guess(self) -> str:
         pass
 
-    def get_random_word(self) -> str:
+    @classmethod
+    def get_random_word(cls) -> str:
         # pick a random word
         return list(valid_words)[np.random.randint(0, len(valid_words))]
 

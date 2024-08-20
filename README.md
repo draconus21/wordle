@@ -26,3 +26,10 @@ python src/wordle -vs
 # or, to set the word for a game w/ ai
 python src/wordle -ai -vs
 ```
+
+# Browser App
+```bash
+uvicorn wordle.fh_app:app
+# for debugging
+uvicorn wordle.fh_app:app --reload
+```

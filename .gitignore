@@ -12,6 +12,9 @@ bash.exe.stackdump
 docs/_html
 .pytest*
 
+# OS
+.DS_Store
+
 ###########
 ### VIM ###
 ###########
@@ -133,6 +136,8 @@ ENV/
 *.code-workspace
 .vscode/
 envVar.env
+.sesskey
+
 
 # run.ini
 *.ini
