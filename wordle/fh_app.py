@@ -88,7 +88,7 @@ def keyboard():
 
 
 def home():
-    return ft.Div(
+    return ft.Title("Wordle", cls="container containerx"), ft.Div(
         ft.H1("Wordle", cls="container containerx"),
         msg_area(),
         play_area(),
