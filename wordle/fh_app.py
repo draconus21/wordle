@@ -130,9 +130,11 @@ def key_pressed(key: str):
     elif key == "Delete":  # delete character
         game.cur_col = max(0, game.cur_col - 1)
         guesses[game.cur_row][game.cur_col] = ("", "cell")
-    else:
+    elif game.cur_col < n_cols:
         guesses[game.cur_row][game.cur_col] = (key, "cell")
         game.cur_col = min(game.cur_col + 1, n_cols)
+    else:
+        logging.error("out of bounds")
 
     if game.wordle.game_status == GameStatus.WON:
         error = "You won!"
