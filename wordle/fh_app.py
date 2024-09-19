@@ -31,7 +31,8 @@ class GameFH(Game):
 game = GameFH(Game.get_random_word())
 
 css = common.StyleX((Path(__file__).parent / "assets/wordle.css").resolve())
-app, rt = common.fast_app(hdrs=(css,), live=True)
+scripts = common.ScriptX((Path(__file__).parent / "assets/wordle.js").resolve())
+app, rt = common.fast_app(hdrs=(css, scripts), live=True)
 
 
 def msg_area(msg=""):
@@ -104,7 +105,8 @@ def key_pressed(key: str):
     global key_colors
     error = ""
 
-    if key == "Enter":  # check word
+    key = key.upper()
+    if key == "ENTER":  # check word
         try:
             guess = game.get_next_guess(guesses)
             game.wordle.current_guess = guess
@@ -127,20 +129,30 @@ def key_pressed(key: str):
         except ValidationError as e:
             error = f"{e.errors()[-1]['ctx']['error']}. Try again"
             logging.error(error)
-    elif key == "Delete":  # delete character
+    elif key == "DELETE" or key == "BACKSPACE":  # delete character
         game.cur_col = max(0, game.cur_col - 1)
         guesses[game.cur_row][game.cur_col] = ("", "cell")
     elif game.cur_col < n_cols:
-        guesses[game.cur_row][game.cur_col] = (key, "cell")
-        game.cur_col = min(game.cur_col + 1, n_cols)
+        if key.isalpha() and len(key) == 1:
+            key = key.upper()
+            guesses[game.cur_row][game.cur_col] = (key, "cell")
+            game.cur_col = min(game.cur_col + 1, n_cols)
+        else:
+            key = None
+            logging.error(f"invalid key: {key}")
     else:
+        key = None
         logging.error("out of bounds")
 
     if game.wordle.game_status == GameStatus.WON:
         error = "You won!"
     elif game.wordle.game_status == GameStatus.LOST:
         error = f"You lost. The word was {game.wordle.word}."
-    return button(key), play_area(), msg_area(error), keyboard()
+
+    if key is None:
+        return play_area(), msg_area(error), keyboard()
+    else:
+        return button(key), play_area(), msg_area(error), keyboard()
 
 
 @app.get("/")
