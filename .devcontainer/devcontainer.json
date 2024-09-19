@@ -1,32 +1,44 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
-	"name": "Python 3",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:1-3.10-bullseye",
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	//"features": {},
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [
-		8000
+	"name": "wordle",
+	"image": "mcr.microsoft.com/vscode/devcontainers/python:3",
+	"runArgs": [
+		"--net",
+		"host",
+		"-v",
+		"${localEnv:HOME}${localEnv:USERPROFILE}/.Xauthority:/tmp/.Xauthority"
 	],
-	// Use 'postCreateCommand' to run commands after the container is created.
 	"containerEnv": {
-		"CNT_POST_SCRIPT": "${containerWorkspaceFolder}/.devcontainer/post-install.sh"
+		"CNT_POST_SCRIPT": "${containerWorkspaceFolder}/.devcontainer/post-install.sh",
+		"DISPLAY": "${localEnv:DISPLAY}",
+		"XAUTHORITY": "/tmp/.Xauthority",
+		"TZ": "${localEnv:TZ:America/Toronto}"
 	},
 	"postStartCommand": "chmod +x ${CNT_POST_SCRIPT} && ${CNT_POST_SCRIPT}",
-	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
 			"extensions": [
+				"ms-python.python",
 				"ms-python.black-formatter",
 				"ms-python.isort",
-				"tamasfe.even-better-toml"
+				"ms-python.vscode-pylance",
+				"ms-python.debugpy",
+				"tamasfe.even-better-toml",
+				"timonwong.shellcheck",
+				"eamodio.gitlens",
+				"monokai.theme-monokai-pro-vscode",
+				"lextudio.restructuredtext",
+				"redhat.vscode-xml"
 			],
 			"settings": {
 				"editor.formatOnSave": true,
 				"python.analysis.autoFormatStrings": true,
 				"black-formatter.showNotifications": "onError",
+				"black-formatter.args": [
+					"--config",
+					"${containerWorkspaceFolder}/pyproject.toml"
+				],
 				"terminal.integrated.tabStopWidth": 2,
 				"editor.renderWhitespace": "trailing",
 				"files.trimTrailingWhitespace": true,
@@ -56,7 +68,24 @@
 				"explorer.excludeGitIgnore": true
 			}
 		}
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {
+			"ppa": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/git-lfs:1": {
+			"autoPull": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
+			"plugins": "git docker colored-man-pages zsh-autosuggestions zsh-syntax-highlighting",
+			"omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions https://github.com/zsh-users/zsh-syntax-highlighting"
+		},
+		"ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {
+			"setLocale": true,
+			"theme": "agnoster",
+			"desiredLocale": "en_US.UTF-8 UTF-8"
+		}
 	}
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	//"remoteUser": ""
 }
