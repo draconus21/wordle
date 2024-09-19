@@ -31,7 +31,8 @@ class GameFH(Game):
 game = GameFH(Game.get_random_word())
 
 css = common.StyleX((Path(__file__).parent / "assets/wordle.css").resolve())
-app, rt = common.fast_app(hdrs=(css,), live=True)
+scripts = common.ScriptX((Path(__file__).parent / "assets/wordle.js").resolve())
+app, rt = common.fast_app(hdrs=(css, scripts), live=True)
 
 
 def msg_area(msg=""):
