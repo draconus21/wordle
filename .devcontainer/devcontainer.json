@@ -15,7 +15,7 @@
 		"XAUTHORITY": "/tmp/.Xauthority",
 		"TZ": "${localEnv:TZ:America/Toronto}"
 	},
-	"postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && chmod +x ${CNT_POST_SCRIPT} && ${CNT_POST_SCRIPT}",
+	"postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && chmod +x ${CNT_POST_SCRIPT} && ${CNT_POST_SCRIPT}",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
