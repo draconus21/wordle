@@ -360,14 +360,15 @@ def run(ai, vs):
 
 
 if __name__ == "__main__":
-    try:
-        result = run()
-        click.echo(result)
-    except Exception as e:
-        print(e)
-    # n = 1000
-    # stats = {GameStatus.WON: 0, GameStatus.LOST: 0}
-    # for i in range(n):
-    #    stats[GameAI(word="hello").play()] += 1
+    # try:
+    #    result = run()
+    #    click.echo(result)
+    # except Exception as e:
+    #    print(e)
+    n = 1000
 
-    # print(stats)
+    stats = {GameStatus.WON: 0, GameStatus.LOST: 0}
+    for i in range(n):
+        stats[GameAI(word="hello").play()] += 1
+
+    print(stats)
