@@ -151,12 +151,13 @@ class DataStats:
 
 
 class BetterGuess:
-    def __init__(self, dataset, stats_table, max_wlen=W_LEN):
+    def __init__(self, dataset, stats_table, top_k=5, max_wlen=W_LEN):
         self.alphabet = _Alphabet()
         self.max_wlen = max_wlen
         self.dataset = dataset
         self.stats_table = stats_table
         self.probs = None
+        self.top_k = top_k
         self.update_probabilities()
 
     def __len__(self):
@@ -170,13 +171,12 @@ class BetterGuess:
         return np.random.choice(self.dataset)
 
     def make_better_guess(self):
-        top_k = 5
         w = np.array(list(self.probs.keys()))
         p = np.array(list(self.probs.values()))
 
         # pick top_k elements
-        if len(w) > top_k:
-            idx = np.argpartition(-p, top_k)[:top_k]
+        if len(w) > self.top_k:
+            idx = np.argpartition(-p, self.top_k)[: self.top_k]
             p = np.take(p, idx)
             w = np.take(w, idx)
         else:
@@ -220,9 +220,9 @@ class BetterGuess:
         self.update_probabilities()
 
 
-def play(word_to_guess, guess_strategy):
+def play(word_to_guess, guess_strategy, top_k):
     d = DataStats(list(valid_words))
-    g = BetterGuess(list(valid_words), stats_table=d)
+    g = BetterGuess(list(valid_words), stats_table=d, top_k=top_k)
     w = WordleWord(word_to_guess)
     g.update(w)
 
@@ -249,7 +249,8 @@ def play(word_to_guess, guess_strategy):
     "--guess-strategy", "-g", type=click.Choice(["random", "better"]), default="better", help="Guess strategy"
 )
 @click.option("--num-simulations", "-n", type=int, default=100, help="Number of simulations")
-def run(guess_strategy, num_simulations):
+@click.option("--top-k", type=int, default=5, help="Top k words to consider")
+def run(guess_strategy, num_simulations, top_k):
     """Run the wordle game"""
     from tqdm import tqdm
 
@@ -257,7 +258,7 @@ def run(guess_strategy, num_simulations):
     n_won = 0
     for i in tqdm(range(num_simulations), desc="Simulating ..."):
         w = np.random.choice(list(valid_words))
-        status, steps = play(w, guess_strategy=guess_strategy)
+        status, steps = play(w, guess_strategy=guess_strategy, top_k=top_k)
         if status == GameStatus.WON:
             n_won += 1
         total_steps += steps / MAX_STEPS
