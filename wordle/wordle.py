@@ -2,7 +2,8 @@ import click
 import numpy as np
 
 
-from wordle.word import WordleWord, GameStatus, valid_words, MAX_STEPS
+from wordle.word import GameStatus, valid_words, MAX_STEPS
+from wordle.game import Game
 from wordle.guesser.base import RandomGuesser
 from wordle.guesser.better import BetterGuesser
 
@@ -13,22 +14,7 @@ def play(word_to_guess, guess_strategy, top_k):
     else:
         g = BetterGuesser(list(valid_words), top_k=top_k)
 
-    w = WordleWord(word_to_guess)
-    g.update(w)
-
-    for i in range(MAX_STEPS):
-        cur_guess = g.make_guess()
-        w.process_guess(cur_guess)
-
-        if w.game_status == GameStatus.WON:
-            break
-
-        g.update(w)
-
-    if w.game_status != GameStatus.WON:
-        w.game_status = GameStatus.LOST
-
-    return w.game_status, i
+    return Game(word_to_guess, g, max_guesses=MAX_STEPS).play()
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -53,6 +39,7 @@ def run(guess_strategy, num_simulations, top_k):
 
     result = dict(
         guess_strategy=guess_strategy,
+        max_guesses=MAX_STEPS,
         n_games=num_simulations,
         win_rate=n_won / num_simulations,
         avg_steps=MAX_STEPS * total_steps / num_simulations,

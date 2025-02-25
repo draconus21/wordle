@@ -11,13 +11,13 @@ class Guesser(ABC):
         self.dataset = dataset
         self.max_wlen = max_wlen
 
-    def make_guess(self):
-        guess = self._make_guess()
-        if guess in self.dataset:
-            self.dataset.remove(guess)
+    def guess(self):
+        _guess = self._make_guess()
+        if _guess in self.dataset:
+            self.dataset.remove(_guess)
         else:
-            raise ValueError(f"Invalid guess: {guess}")
-        return guess
+            raise ValueError(f"Invalid guess: {_guess}")
+        return _guess
 
     @abstractmethod
     def _make_guess(self):
