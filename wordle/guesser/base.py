@@ -23,8 +23,8 @@ class Guesser(ABC):
     def _make_guess(self):
         pass
 
-    def update_probabilities(self):
-        pass
+    def __len__(self):
+        return len(self.dataset)
 
     def update(self, word: WordleWord):
         self.alphabet = word.alphabet  # update alphabet
@@ -49,12 +49,5 @@ class Guesser(ABC):
 
 
 class RandomGuesser(Guesser):
-    def __init__(self, dataset, max_wlen=W_LEN):
-        super().__init__(dataset, max_wlen)
-        self.update_probabilities()
-
-    def __len__(self):
-        return len(self.dataset)
-
     def _make_guess(self):
         return np.random.choice(self.dataset)
