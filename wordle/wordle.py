@@ -4,6 +4,7 @@ import string
 from getpass import getpass
 from enum import Enum
 import numpy as np
+from abc import ABC, abstractmethod
 from pydantic import BaseModel, ConfigDict
 from typing import List, Dict
 
@@ -30,8 +31,6 @@ def get_data():
 
 
 valid_words = get_data()
-
-qwerty = ["qwertyuiop", " asdfghjkl", "  zxcvbnm"]
 
 
 class Status(Enum):
@@ -150,11 +149,64 @@ class DataStats:
         return prob
 
 
-class BetterGuess:
-    def __init__(self, dataset, stats_table, top_k=5, max_wlen=W_LEN):
+class Guesser(ABC):
+    def __init__(self, dataset, max_wlen=W_LEN):
         self.alphabet = _Alphabet()
-        self.max_wlen = max_wlen
         self.dataset = dataset
+        self.max_wlen = max_wlen
+
+    def make_guess(self):
+        guess = self._make_guess()
+        if guess in self.dataset:
+            self.dataset.remove(guess)
+        else:
+            raise ValueError(f"Invalid guess: {guess}")
+        return guess
+
+    @abstractmethod
+    def _make_guess(self):
+        pass
+
+    def update_probabilities(self):
+        pass
+
+    def update(self, word: WordleWord):
+        self.alphabet = word.alphabet  # update alphabet
+
+        ltrs = "".join([l.ltr for l in self.alphabet.letters.values()])
+        reg_str = [f"[{ltrs}]"] * len(word)
+        for l in self.alphabet.letters.values():
+            if l.status in [Status.IN_POSITION, Status.IN_WORD]:
+                for p in l.position:
+                    if p > 0:
+                        reg_str[p - 1] = l.ltr
+                    elif p < 0:
+                        reg_str[-p - 1] = reg_str[-p - 1].replace(l.ltr, "")
+                    else:
+                        raise ValueError(f"Invalid position, {p} for {l}")
+        reg_str = "".join(reg_str)
+        reg_str = f"^{reg_str}$"
+
+        regex = re.compile(reg_str)
+        new_dataset = [w for w in self.dataset if regex.match(w)]
+        self.dataset = new_dataset
+
+
+class RandomGuesser(Guesser):
+    def __init__(self, dataset, max_wlen=W_LEN):
+        super().__init__(dataset, max_wlen)
+        self.update_probabilities()
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def _make_guess(self):
+        return np.random.choice(self.dataset)
+
+
+class BetterGuesser(Guesser):
+    def __init__(self, dataset, stats_table, top_k=5, max_wlen=W_LEN):
+        super().__init__(dataset, max_wlen)
         self.stats_table = stats_table
         self.probs = None
         self.top_k = top_k
@@ -167,10 +219,7 @@ class BetterGuess:
     def vocab_size(self):
         return len(self.alphabet)
 
-    def make_random_guess(self):
-        return np.random.choice(self.dataset)
-
-    def make_better_guess(self):
+    def _make_guess(self):
         w = np.array(list(self.probs.keys()))
         p = np.array(list(self.probs.values()))
 
@@ -198,39 +247,22 @@ class BetterGuess:
         self.probs = probs
 
     def update(self, word: WordleWord):
-        self.alphabet = word.alphabet  # update alphabet
-
-        ltrs = "".join([l.ltr for l in self.alphabet.letters.values()])
-        reg_str = [f"[{ltrs}]"] * len(word)
-        for l in self.alphabet.letters.values():
-            if l.status in [Status.IN_POSITION, Status.IN_WORD]:
-                for p in l.position:
-                    if p > 0:
-                        reg_str[p - 1] = l.ltr
-                    elif p < 0:
-                        reg_str[-p - 1] = reg_str[-p - 1].replace(l.ltr, "")
-                    else:
-                        raise ValueError(f"Invalid position, {p} for {l}")
-        reg_str = "".join(reg_str)
-        reg_str = f"^{reg_str}$"
-
-        regex = re.compile(reg_str)
-        new_dataset = [w for w in self.dataset if regex.match(w)]
-        self.dataset = new_dataset
+        super().update(word)
         self.update_probabilities()
 
 
 def play(word_to_guess, guess_strategy, top_k):
     d = DataStats(list(valid_words))
-    g = BetterGuess(list(valid_words), stats_table=d, top_k=top_k)
+    if guess_strategy.lower() == "random":
+        g = RandomGuesser(list(valid_words))
+    else:
+        g = BetterGuesser(list(valid_words), stats_table=d, top_k=top_k)
+
     w = WordleWord(word_to_guess)
     g.update(w)
 
     for i in range(MAX_STEPS):
-        if guess_strategy.lower() == "random":
-            cur_guess = g.make_random_guess()
-        else:
-            cur_guess = g.make_better_guess()
+        cur_guess = g.make_guess()
         w.process_guess(cur_guess)
 
         if w.game_status == GameStatus.WON:
